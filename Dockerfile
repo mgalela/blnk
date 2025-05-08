@@ -1,14 +1,21 @@
 FROM golang:1.23-alpine as build-env
+
+ENV CGO_ENABLED=1
+
+RUN set -ex && \
+    apk add --no-cache gcc musl-dev
+
 WORKDIR /go/src/blnk
 
 COPY . .
+RUN apk add --no-cache git
 
-RUN go build -o /blnk ./cmd/*.go
+RUN go build -ldflags='-s -w -extldflags "-static"' -o /blnk ./cmd/*.go
 
 FROM debian:bullseye-slim
 
 # Install pg_dump version 16
-RUN apt-get update && apt-get install -y wget gnupg2 lsb-release && \
+RUN apt-get update && apt-get install -y wget gnupg2 lsb-release gcc && \
     echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list && \
     wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add - && \
     apt-get update && \
