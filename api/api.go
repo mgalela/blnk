@@ -87,6 +87,7 @@ func (a Api) Router() *gin.Engine {
 	// Account routes
 	router.POST("/accounts", a.CreateAccount)
 	router.GET("/accounts/:id", a.GetAccount)
+	router.GET("/accounts/:id/number", a.GetAccountByNumber)
 	router.GET("/accounts", a.GetAllAccounts)
 
 	// Mocked Account route

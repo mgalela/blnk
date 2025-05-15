@@ -80,6 +80,18 @@ func (a Api) GetAccount(c *gin.Context) {
 	c.JSON(http.StatusOK, account)
 }
 
+func (a Api) GetAccountByNumber(c *gin.Context) {
+	id := c.Param("id")
+
+	account, err := a.blnk.GetAccountByNumber(id)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, account)
+}
+
+
 // GetAllAccounts retrieves all accounts.
 // It fetches a list of all accounts in the system.
 //
