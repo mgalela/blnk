@@ -100,6 +100,51 @@ func (d Datasource) GetAccountByID(id string, include []string) (*model.Account,
 	return account, nil
 }
 
+// GetAccountByID retrieves an account by its ID from the database.
+// It uses a transaction to ensure consistency and can include additional
+// related entities like balance, identity, or ledger if specified in the `include` parameter.
+// Parameters:
+// - id: The ID of the account to retrieve.
+// - include: A list of related entities to include in the query result.
+// Returns:
+// - A pointer to the retrieved Account or an error if something goes wrong.
+func (d Datasource) GetAccountByIDNumber(id string, include []string) (*model.Account, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
+	defer cancel()
+
+	// Start a transaction
+	tx, err := d.Conn.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	// Prepare the query with additional includes if needed
+	var queryBuilder strings.Builder
+	query := prepareAccountNumberQueries(queryBuilder, include)
+
+	// Execute the query
+	row := tx.QueryRow(query, id)
+
+	// Scan the result into the account object
+	account, err := scanAccountRow(row, tx, include)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			// No account found for the given ID
+			return nil, fmt.Errorf("account with ID '%s' not found", id)
+		}
+		return nil, err
+	}
+
+	// Commit the transaction
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
+	}
+
+	// Return the account object
+	return account, nil
+}
+
 // prepareAccountQueries constructs an SQL query for retrieving accounts, including
 // optional related entities such as balance, identity, and ledger if specified in the `include` parameter.
 // Parameters:
@@ -170,6 +215,78 @@ func prepareAccountQueries(queryBuilder strings.Builder, include []string) strin
 
 	return queryBuilder.String()
 }
+
+// prepareAccountNumberQueries constructs an SQL query for retrieving accounts, including
+// optional related entities such as balance, identity, and ledger if specified in the `include` parameter.
+// Parameters:
+// - queryBuilder: A strings.Builder used to build the query string.
+// - include: A list of related entities (balance, identity, ledger) to be included in the query.
+// Returns:
+// - A constructed SQL query string.
+func prepareAccountNumberQueries(queryBuilder strings.Builder, include []string) string {
+	var selectFields []string
+	// Default fields for the account
+	selectFields = append(selectFields,
+		"a.account_id", "a.name", "a.number", "a.bank_name",
+		"a.currency", "a.ledger_id",
+		"a.identity_id", "a.balance_id", "a.created_at", "a.meta_data")
+
+	// Include balance fields if specified
+	if contains(include, "balance") {
+		selectFields = append(selectFields,
+			"b.balance_id", "b.balance", "b.credit_balance", "b.debit_balance",
+			"b.currency", "b.currency_multiplier", "b.ledger_id",
+			"COALESCE(b.identity_id, '') as identity_id", "b.created_at", "b.meta_data")
+	}
+
+	// Include identity fields if specified
+	if contains(include, "identity") {
+		selectFields = append(selectFields,
+			"i.identity_id", "i.first_name", "i.organization_name", "i.category", "i.last_name", "i.other_names",
+			"i.gender", "i.dob", "i.email_address", "i.phone_number",
+			"i.nationality", "i.street", "i.country", "i.state",
+			"i.post_code", "i.city", "i.identity_type", "i.created_at", "i.meta_data")
+	}
+
+	// Include ledger fields if specified
+	if contains(include, "ledger") {
+		selectFields = append(selectFields,
+			"l.ledger_id", "l.name", "l.created_at")
+	}
+
+	// Construct the query
+	queryBuilder.WriteString("SELECT ")
+	queryBuilder.WriteString(strings.Join(selectFields, ", "))
+	queryBuilder.WriteString(`
+        FROM (
+            SELECT * FROM blnk.accounts WHERE number = $1
+        ) AS a
+    `)
+
+	// Join identity if specified
+	if contains(include, "identity") {
+		queryBuilder.WriteString(`
+            LEFT JOIN blnk.identity i ON a.identity_id = i.identity_id
+        `)
+	}
+
+	// Join ledger if specified
+	if contains(include, "ledger") {
+		queryBuilder.WriteString(`
+            LEFT JOIN blnk.ledgers l ON a.ledger_id = l.ledger_id
+        `)
+	}
+
+	// Join balance if specified
+	if contains(include, "balance") {
+		queryBuilder.WriteString(`
+            LEFT JOIN blnk.balances b ON a.balance_id = b.balance_id
+        `)
+	}
+
+	return queryBuilder.String()
+}
+
 
 // scanAccountRow scans a row from the database into an Account object.
 // It can also scan related Balance, Identity, and Ledger data if specified in the `include` parameter.
@@ -295,7 +412,7 @@ func (d Datasource) GetAllAccounts() ([]model.Account, error) {
 func (d Datasource) GetAccountByNumber(number string) (*model.Account, error) {
 	// Query the database for the account with the given number
 	row := d.Conn.QueryRow(`
-		SELECT account_id, name, number, bank_name, created_at, meta_data 
+		SELECT account_id, name, number, bank_name, balance_id, created_at, meta_data 
 		FROM blnk.accounts WHERE number = $1
 	`, number)
 
@@ -303,7 +420,7 @@ func (d Datasource) GetAccountByNumber(number string) (*model.Account, error) {
 	var metaDataJSON []byte
 
 	// Scan the result into the Account object
-	err := row.Scan(&account.AccountID, &account.Name, &account.Number, &account.BankName, &account.CreatedAt, &metaDataJSON)
+	err := row.Scan(&account.AccountID, &account.Name, &account.Number, &account.BankName, &account.BalanceID, &account.CreatedAt, &metaDataJSON)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, fmt.Errorf("account with number '%s' not found", number)

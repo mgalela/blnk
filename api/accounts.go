@@ -83,7 +83,9 @@ func (a Api) GetAccount(c *gin.Context) {
 func (a Api) GetAccountByNumber(c *gin.Context) {
 	id := c.Param("id")
 
-	account, err := a.blnk.GetAccountByNumber(id)
+	includes := c.QueryArray("include")
+
+	account, err := a.blnk.GetAccountByNumber(id, includes)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return

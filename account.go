@@ -172,8 +172,8 @@ func (l *Blnk) GetAccount(id string, include []string) (*model.Account, error) {
 // Returns:
 // - *model.Account: A pointer to the Account model if found.
 // - error: An error if the account could not be retrieved.
-func (l *Blnk) GetAccountByNumber(id string) (*model.Account, error) {
-	return l.datasource.GetAccountByNumber(id)
+func (l *Blnk) GetAccountByNumber(id string, include []string) (*model.Account, error) {
+	return l.datasource.GetAccountByIDNumber(id, include)
 }
 
 // GetAllAccounts retrieves all accounts from the database.

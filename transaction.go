@@ -1456,12 +1456,89 @@ func (l *Blnk) QueueTransaction(ctx context.Context, transaction *model.Transact
 	return transaction, nil
 }
 
+//trizelka Added
+// QueueTransactionByNumber processes and queues a transaction for execution.
+// for transaction source and destination by number
+func (l *Blnk) QueueTransactionByNumber(ctx context.Context, transaction *model.Transaction) (*model.Transaction, error) {
+	ctx, span := tracer.Start(ctx, "QueueTransactionByNumber")
+	defer span.End()
+
+	// Initialize transaction metadata and status
+	originalRef := transaction.Reference
+	setTransactionMetadata(transaction)
+	setTransactionStatus(transaction)
+	originalTxnID := transaction.TransactionID
+
+	// Handle split transactions if needed
+	transactions, err := l.handleSplitTransactions(ctx, transaction)
+	if err != nil {
+		span.RecordError(err)
+		return nil, err
+	}
+
+	// If SkipQueue is true, process synchronously
+	if transaction.SkipQueue {
+		_, err := l.processTxns(ctx, transaction, transactions, originalTxnID, originalRef)
+		if err != nil {
+			span.RecordError(err)
+			return nil, err
+		}
+
+		// Update transaction status based on inflight flag
+		if transaction.Inflight {
+			transaction.Status = StatusInflight
+		} else {
+			transaction.Status = StatusApplied
+		}
+	} else {
+		if transaction.MetaData != nil && !transaction.SkipQueue {
+			transaction.MetaData["QUEUED_PARENT_TRANSACTION"] = originalTxnID
+		}
+		// For normal queue mode, process asynchronously
+		processTransactionAsyncByNumber(context.Background(), l, transaction, originalRef, originalTxnID, transactions)
+	}
+
+	span.AddEvent("Transaction successfully queued", trace.WithAttributes(
+		attribute.String("transaction.id", transaction.TransactionID),
+	))
+
+	err = l.queue.QueueInflightExpiry(ctx, transaction)
+	if err != nil {
+		span.RecordError(err)
+		return nil, l.logAndRecordError(span, "failed to queue inflight expiry", err)
+	}
+
+	return transaction, nil
+}
+
 func processTransactionAsync(ctx context.Context, l *Blnk, transaction *model.Transaction, originalRef string, originalTxnID string, transactions []*model.Transaction) {
 	go func() {
 		ctx, span := tracer.Start(ctx, "ProcessTransactionAsync")
 		defer span.End()
 
 		queueTransactions, err := l.processTxns(ctx, transaction, transactions, originalTxnID, originalRef)
+		if err != nil {
+			span.RecordError(err)
+			// return nil, err
+		}
+
+		if !transaction.SkipQueue {
+			if err := enqueueTransactions(ctx, l.queue, transaction, queueTransactions); err != nil {
+				span.RecordError(err)
+				// return nil, err
+			}
+		}
+	}()
+}
+
+//trizelka Added
+// transaction source and destination by Number
+func processTransactionAsyncByNumber(ctx context.Context, l *Blnk, transaction *model.Transaction, originalRef string, originalTxnID string, transactions []*model.Transaction) {
+	go func() {
+		ctx, span := tracer.Start(ctx, "ProcessTransactionAsyncByNumber")
+		defer span.End()
+
+		queueTransactions, err := l.processTxnsByNumber(ctx, transaction, transactions, originalTxnID, originalRef)
 		if err != nil {
 			span.RecordError(err)
 			// return nil, err
@@ -1511,6 +1588,49 @@ func (l *Blnk) handleSplitTransactions(ctx context.Context, transaction *model.T
 // - []*model.Transaction: A slice of processed transactions ready for queueing.
 // - error: An error if the processing fails.
 func (l *Blnk) processTxns(ctx context.Context, originalTxn *model.Transaction, splitTxns []*model.Transaction, originalTxnID, originalRef string) ([]*model.Transaction, error) {
+	if originalTxn.SkipQueue {
+		if len(splitTxns) == 0 {
+			recorded, err := l.RecordTransaction(ctx, originalTxn)
+			if err != nil {
+				return nil, err
+			}
+			return []*model.Transaction{recorded}, nil
+		} else {
+			result := make([]*model.Transaction, len(splitTxns))
+			for i, txn := range splitTxns {
+				recorded, err := l.RecordTransaction(ctx, txn)
+				if err != nil {
+					if txn.Atomic {
+						l.handleAsyncBulkTransactionFailure(ctx, err, originalTxnID, true, txn.Inflight)
+					}
+					return nil, fmt.Errorf("failed to record split transaction %d: %w", i, err)
+				}
+				result[i] = recorded
+			}
+			return result, nil
+		}
+	}
+	if len(splitTxns) == 0 {
+		return l.processSingleTransaction(ctx, originalTxn, originalRef)
+	}
+	return l.processSplitTransactions(ctx, splitTxns, originalTxnID, originalRef)
+}
+
+//trizelka Added
+//Transacticon replace source and destination from Number to balanceID
+func (l *Blnk) processTxnsByNumber(ctx context.Context, originalTxn *model.Transaction, splitTxns []*model.Transaction, originalTxnID, originalRef string) ([]*model.Transaction, error) {
+	bsource, err := l.datasource.GetAccountByNumber(originalTxn.Source)
+	if err != nil {
+		return nil, err
+	}
+	bdestination, err := l.datasource.GetAccountByNumber(originalTxn.Destination)
+	if err != nil {
+		return nil, err
+	}
+
+	originalTxn.Source = bsource.BalanceID
+	originalTxn.Destination = bdestination.BalanceID
+
 	if originalTxn.SkipQueue {
 		if len(splitTxns) == 0 {
 			recorded, err := l.RecordTransaction(ctx, originalTxn)
@@ -1951,6 +2071,30 @@ func (l *Blnk) processBulkTransactions(ctx context.Context, transactions []*mode
 	return nil
 }
 
+// processBulkTransactionByNumbers prepares and queues all transactions in a batch with the given batch ID
+func (l *Blnk) processBulkTransactionByNumbers(ctx context.Context, transactions []*model.Transaction, batchID string, inflight bool) error {
+	for i, txn := range transactions {
+		// Set transaction properties
+		txn.Inflight = inflight
+		txn.SkipQueue = true // Process synchronously within the batch context first
+		txn.ParentTransaction = batchID
+
+		// Add sequence number to metadata
+		if txn.MetaData == nil {
+			txn.MetaData = make(map[string]interface{})
+		}
+		txn.MetaData["sequence"] = i + 1
+
+		// Queue the transaction (which will record it if SkipQueue is true)
+		if _, err := l.QueueTransactionByNumber(ctx, txn); err != nil {
+			// Create a more descriptive error that includes transaction reference details
+			return fmt.Errorf("failed to queue transaction %d (Reference: %s, Source: %s, Destination: %s, Amount: %.2f): %w",
+				i+1, txn.Reference, txn.Source, txn.Destination, txn.Amount, err)
+		}
+	}
+	return nil
+}
+
 // rollbackBatchTransactions performs a rollback of transactions in a batch
 // Returns the action performed (voided/refunded) and any error that occurred
 func (l *Blnk) rollbackBatchTransactions(ctx context.Context, batchID string, isInflight bool) (string, error) {
@@ -2111,6 +2255,96 @@ func (l *Blnk) CreateBulkTransactions(ctx context.Context, req *model.BulkTransa
 
 	// Process transactions in batch
 	if err := l.processBulkTransactions(ctx, req.Transactions, batchID, req.Inflight); err != nil {
+		span.RecordError(err)
+		logrus.Errorf("Sync bulk transaction error for batch %s: %s", batchID, err.Error())
+
+		var responseError string
+		if req.Atomic {
+			action, rollbackErr := l.rollbackBatchTransactions(ctx, batchID, req.Inflight)
+			if rollbackErr != nil {
+				responseError = fmt.Sprintf("%s. Failed to roll back all transactions: %s", err.Error(), rollbackErr.Error())
+			} else {
+				responseError = fmt.Sprintf("%s. All transactions in this batch have been %s.", err.Error(), action)
+			}
+		} else {
+			responseError = fmt.Sprintf("%s. Previous transactions were not rolled back.", err.Error())
+		}
+
+		// Return error result for synchronous failure
+		return &model.BulkTransactionResult{
+			BatchID: batchID,
+			Status:  "failed",
+			Error:   responseError,
+		}, errors.New(responseError) // Return the error itself as well
+	}
+
+	// Synchronous success
+	status := "inflight"
+	if !req.Inflight {
+		status = "applied"
+	}
+
+	logrus.Infof("Completed sync bulk transaction batch %s successfully", batchID)
+	return &model.BulkTransactionResult{
+		BatchID:          batchID,
+		Status:           status,
+		TransactionCount: len(req.Transactions),
+	}, nil
+}
+
+// CreateBulkTransactionByNumbers handles the creation of multiple transactions in a batch.
+// If atomic is true: Any failure will cause all transactions to be rolled back (or voided if inflight).
+// If atomic is false: Failures will stop processing but previous transactions remain unaffected.
+// If run_async is true: Processing happens in background with webhook notifications.
+func (l *Blnk) CreateBulkTransactionByNumbers(ctx context.Context, req *model.BulkTransactionRequest) (*model.BulkTransactionResult, error) {
+	ctx, span := tracer.Start(ctx, "Blnk.CreateBulkTransactionByNumbers")
+	defer span.End()
+
+	// Generate batch ID (parent transaction ID)
+	batchID := model.GenerateUUIDWithSuffix("bulk")
+	span.SetAttributes(attribute.String("batch.id", batchID))
+
+	// Check if this should be run asynchronously
+	if req.RunAsync {
+		// Start processing in background
+		go func() {
+			// Create a background context with timeout
+			bgCtx, cancel := context.WithTimeout(context.Background(), 30*time.Minute) // TODO: Make timeout configurable
+			defer cancel()
+
+			logrus.Infof("Starting async bulk transaction batch %s with %d transactions (atomic: %v, inflight: %v)",
+				batchID, len(req.Transactions), req.Atomic, req.Inflight)
+
+			// Process transactions in batch
+			err := l.processBulkTransactionByNumbers(bgCtx, req.Transactions, batchID, req.Inflight)
+
+			if err != nil {
+				// Handle failure (rollback if atomic, send webhook)
+				l.handleAsyncBulkTransactionFailure(bgCtx, err, batchID, req.Atomic, req.Inflight)
+			} else {
+				// Send webhook notification for success
+				status := "inflight"
+				if !req.Inflight {
+					status = "applied"
+				}
+				l.sendBulkTransactionWebhook(batchID, status, "", len(req.Transactions))
+				logrus.Infof("Completed async bulk transaction batch %s successfully", batchID)
+			}
+		}()
+
+		// Return immediate response indicating async processing started
+		return &model.BulkTransactionResult{
+			BatchID: batchID,
+			Status:  "processing", // Indicate that it's running in the background
+		}, nil
+	}
+
+	// Synchronous processing
+	logrus.Infof("Starting sync bulk transaction batch %s with %d transactions (atomic: %v, inflight: %v)",
+		batchID, len(req.Transactions), req.Atomic, req.Inflight)
+
+	// Process transactions in batch
+	if err := l.processBulkTransactionByNumbers(ctx, req.Transactions, batchID, req.Inflight); err != nil {
 		span.RecordError(err)
 		logrus.Errorf("Sync bulk transaction error for batch %s: %s", batchID, err.Error())
 

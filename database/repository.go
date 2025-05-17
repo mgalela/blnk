@@ -84,6 +84,7 @@ type balance interface {
 type account interface {
 	CreateAccount(account model.Account) (model.Account, error)         // Creates a new account
 	GetAccountByID(id string, include []string) (*model.Account, error) // Retrieves an account by ID with additional data
+	GetAccountByIDNumber(id string, include []string) (*model.Account, error) // Retrieves an account by number with additional data
 	GetAllAccounts() ([]model.Account, error)                           // Retrieves all accounts
 	GetAccountByNumber(number string) (*model.Account, error)           // Retrieves an account by its number
 	UpdateAccount(account *model.Account) error                         // Updates an account

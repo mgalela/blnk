@@ -68,7 +68,9 @@ func (a Api) Router() *gin.Engine {
 
 	// Transaction routes
 	router.POST("/transactions", a.QueueTransaction)
+	router.POST("/transactions/number", a.QueueTransactionByNumber)
 	router.POST("/transactions/bulk", a.CreateBulkTransactions)
+	router.POST("/transactions/bulk/number", a.CreateBulkTransactionByNumbers)
 	router.POST("/refund-transaction/:id", a.RefundTransaction)
 	router.GET("/transactions/:id", a.GetTransaction)
 	router.PUT("/transactions/inflight/:txID", a.UpdateInflightStatus)
@@ -87,7 +89,7 @@ func (a Api) Router() *gin.Engine {
 	// Account routes
 	router.POST("/accounts", a.CreateAccount)
 	router.GET("/accounts/:id", a.GetAccount)
-	router.GET("/accounts/:id/number", a.GetAccountByNumber)
+	router.GET("/accounts/number/:id", a.GetAccountByNumber)
 	router.GET("/accounts", a.GetAllAccounts)
 
 	// Mocked Account route

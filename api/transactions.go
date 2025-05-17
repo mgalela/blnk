@@ -130,6 +130,34 @@ func (a Api) QueueTransaction(c *gin.Context) {
 	c.JSON(http.StatusCreated, transformTransaction(resp))
 }
 
+func (a Api) QueueTransactionByNumber(c *gin.Context) {
+	var newTransaction model2.RecordTransaction
+	// Bind the incoming JSON request to the newTransaction 
+	if err := c.ShouldBindJSON(&newTransaction); err != nil {
+		logrus.Error(err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
+		return
+	}
+
+	// Validate the transaction data
+	err := newTransaction.ValidateRecordTransaction()
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"errors": err.Error()})
+		return
+	}
+
+	// Queue the transaction using the Blnk service
+	resp, err := a.blnk.QueueTransactionByNumber(c.Request.Context(), newTransaction.ToTransaction())
+	if err != nil {
+		logrus.Error(err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Return a response with the queued transaction, properly transformed
+	c.JSON(http.StatusCreated, transformTransaction(resp))
+}
+
 // RefundTransaction processes a refund for a transaction based on the given ID.
 // It retrieves the transaction to be refunded and processes it in batches. If any errors
 // occur during retrieval or processing, it responds with an appropriate error message.
@@ -283,3 +311,47 @@ func (a Api) CreateBulkTransactions(c *gin.Context) {
 		})
 	}
 }
+
+// CreateBulkTransactionsByNumber handles the creation of multiple transactions in a batch.
+// It parses the request, calls the Blnk service to handle the core logic,
+// and returns the appropriate HTTP response based on the result.
+func (a Api) CreateBulkTransactionByNumbers(c *gin.Context) {
+	// Parse the request into the model struct
+	var req model.BulkTransactionRequest
+	if err := c.BindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body: " + err.Error()})
+		return
+	}
+
+	// Call the service layer method to handle bulk transaction creation
+	result, err := a.blnk.CreateBulkTransactionByNumbers(c.Request.Context(), &req)
+
+	// Handle the response based on the result and error from the service layer
+	if err != nil {
+		// If there was an error during synchronous processing
+		logrus.Errorf("Bulk transaction API error for batch %s: %v", result.BatchID, err)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":    result.Error, // Use the detailed error from the result
+			"batch_id": result.BatchID,
+		})
+		return
+	}
+
+	// Handle successful responses
+	if req.RunAsync {
+		// Async request acknowledged
+		c.JSON(http.StatusAccepted, gin.H{
+			"message":  "Bulk transaction processing started",
+			"batch_id": result.BatchID,
+			"status":   result.Status, // Should be "processing"
+		})
+	} else {
+		// Synchronous request completed successfully
+		c.JSON(http.StatusCreated, gin.H{
+			"batch_id":          result.BatchID,
+			"status":            result.Status, // Should be "applied" or "inflight"
+			"transaction_count": result.TransactionCount,
+		})
+	}
+}
+
