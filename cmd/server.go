@@ -240,11 +240,12 @@ func serverCommands(b *blnkInstance) *cobra.Command {
 			if err != nil {
 				log.Printf("TypeSense initialization error: %v", err)
 			}
-
+			
 			// Start server
 			if err := startServer(router, cfg.Server); err != nil {
 				log.Fatal(err)
 			}
+
 		},
 	}
 

@@ -33,6 +33,7 @@ import (
 // Default constants
 const (
 	DEFAULT_PORT          = "5001"
+	DEFAULT_GRPC_PORT     = "6010"
 	DEFAULT_TYPESENSE_URL = "http://typesense:8108"
 	DEFAULT_CLEANUP_SEC   = 10800 // 3 hours in seconds
 	DEFAULT_TYPESENSE_KEY = "blnk-api-key"
@@ -73,6 +74,7 @@ type ServerConfig struct {
 	Domain    string `json:"domain" envconfig:"BLNK_SERVER_SSL_DOMAIN"`
 	Email     string `json:"ssl_email" envconfig:"BLNK_SERVER_SSL_EMAIL"`
 	Port      string `json:"port" envconfig:"BLNK_SERVER_PORT"`
+	GrpcPort  string `json:"grpc_port" envconfig:"BLNK_SERVER_GRPC_PORT"`
 }
 
 type DataSourceConfig struct {
@@ -253,6 +255,11 @@ func (cnf *Configuration) setDefaultValues() {
 	if cnf.Server.Port == "" {
 		cnf.Server.Port = DEFAULT_PORT
 		log.Printf("Warning: Port not specified in config. Setting default port: %s", DEFAULT_PORT)
+	}
+
+	if cnf.Server.GrpcPort == "" {
+		cnf.Server.GrpcPort = DEFAULT_GRPC_PORT
+		log.Printf("Warning: Port not specified in config. Setting default port: %s", DEFAULT_GRPC_PORT)
 	}
 
 	// TypeSense defaults

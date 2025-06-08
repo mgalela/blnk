@@ -119,6 +119,7 @@ func NewCLI() *Blnk {
 
 	// Add various subcommands to the root command.
 	rootCmd.AddCommand(serverCommands(b))  // Command for starting the server
+	rootCmd.AddCommand(serverGrpcCommands(b))  // Command for starting the GRPC server
 	rootCmd.AddCommand(workerCommands(b))  // Command for worker processes
 	rootCmd.AddCommand(migrateCommands(b)) // Command for database/schema migrations
 

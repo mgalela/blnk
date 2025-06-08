@@ -41,6 +41,23 @@ services:
     volumes:
       - ./blnk.json:/blnk.json
 
+  servergrpc:
+    build: .
+    container_name: servergrpc
+    restart: on-failure
+    entrypoint: [ "blnk", "startgrpc" ]
+    environment:
+      TZ: ${TZ:-Etc/UTC}
+      OTEL_EXPORTER_OTLP_ENDPOINT: jaeger:4318
+    ports:
+      - "6011:6010"
+    depends_on:
+      - redis
+      - postgres
+      - jaeger
+    volumes:
+      - ./blnk.json:/blnk.json
+
   worker:
     build: .
     container_name: worker

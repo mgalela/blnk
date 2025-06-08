@@ -35,6 +35,9 @@ docker_run:
 run:
 	./${PROJECT} start
 
+rungrpc:
+	./${PROJECT} startgrpc
+
 run_workers:
 	./${PROJECT} workers
 

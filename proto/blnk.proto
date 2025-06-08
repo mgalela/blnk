@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+package proto;
+
+option go_package="./proto";
+
+// Blnk service definition
+service BlnkService {
+  rpc GSender(GRequest) returns (GResponse) {}
+}
+
+message HeaderArray {
+  map<string,string> Input = 2;
+}
+
+// GRequest represents a generic transaction request
+message GRequest { 
+  repeated HeaderArray Header = 1;
+  string path = 2;
+  string method = 3;
+  string body = 4;
+}
+
+// GResponse represents a generic transaction response
+message GResponse {
+  int32 response_code = 1;
+  string response_msg = 2;
+  string status = 3;
+  string body = 4;
+}
+

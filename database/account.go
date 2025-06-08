@@ -366,7 +366,7 @@ func scanAccountRow(row *sql.Row, tx *sql.Tx, include []string) (*model.Account,
 func (d Datasource) GetAllAccounts() ([]model.Account, error) {
 	// Execute the SQL query to retrieve account data
 	rows, err := d.Conn.Query(`
-		SELECT account_id, name, number, bank_name, currency, created_at, meta_data 
+		SELECT account_id, name, number, bank_name, balance_id, currency, created_at, meta_data 
 		FROM blnk.accounts
 		ORDER BY created_at DESC
 	`)
@@ -384,7 +384,7 @@ func (d Datasource) GetAllAccounts() ([]model.Account, error) {
 		var metaDataJSON []byte
 
 		// Scan the row into an Account object
-		err := rows.Scan(&account.AccountID, &account.Name, &account.Number, &account.BankName, &account.Currency, &account.CreatedAt, &metaDataJSON)
+		err := rows.Scan(&account.AccountID, &account.Name, &account.Number, &account.BankName, &account.BalanceID, &account.Currency, &account.CreatedAt, &metaDataJSON)
 		if err != nil {
 			return nil, err
 		}
