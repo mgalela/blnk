@@ -6,13 +6,13 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	model "github.com/jerry-enebeli/blnk/model"
+	model2 "github.com/jerry-enebeli/blnk/api/model"
 	pb "github.com/jerry-enebeli/blnk/proto"
 )
 
 //CreateAccount
 func (s *BlnkServer) POS_ACCOUNTS_2() (*pb.GResponse, error) {
-	var newAccount model.Account
+	var newAccount model2.CreateAccount
 	var resp pb.GResponse
 	
 	if err := json.Unmarshal([]byte(s.body), &newAccount); err != nil {
@@ -20,7 +20,13 @@ func (s *BlnkServer) POS_ACCOUNTS_2() (*pb.GResponse, error) {
 		return nil, errors.New("Invalid Account JSON body: " + err.Error())
 	}
 
-	accountResp, err := s.blnk.CreateAccount(newAccount)
+	err := newAccount.ValidateCreateAccount()
+	if err != nil {
+		logrus.Warningf("Invalidate Account: %v", err.Error())
+		return nil, errors.New("Invalidate Account : " + err.Error())
+	}
+
+	accountResp, err := s.blnk.CreateAccount(newAccount.ToAccount())
 	if err != nil {
 		logrus.Warningf("Failed to Created Account: %v", err.Error())
 		resp.Status = "nok"
@@ -109,6 +115,38 @@ func (s *BlnkServer) GET_ACCOUNTS_3() (*pb.GResponse, error) {
 	resp.Status = "ok"
 	resp.ResponseCode = 200
 	resp.ResponseMsg = "Get Account Successfully"
+	resp.Body = string(respbody)
+
+	return &resp, nil
+
+}
+
+func (s *BlnkServer) GET_ACCOUNTS_4() (*pb.GResponse, error) {
+	var resp pb.GResponse
+
+	listaccount, err := s.blnk.GetAccountByNumber(s.path[3], s.includes)
+	if err != nil {
+		logrus.Warningf("Invalid Account JSON Response: %v", err.Error())
+		resp.Status = "nok"
+		resp.ResponseCode = 500
+		resp.ResponseMsg = err.Error()
+		resp.Body = ""
+		return &resp, errors.New("Invalid Account JSON Response: " + err.Error())
+	}
+
+	respbody, err := json.Marshal(listaccount)
+	if err != nil {
+		logrus.Warningf("Failed to Marshal Account: %v", err.Error())
+		resp.Status = "nok"
+		resp.ResponseCode = 500
+		resp.ResponseMsg = err.Error()
+		resp.Body = ""
+		return &resp, err
+	}
+
+	resp.Status = "ok"
+	resp.ResponseCode = 200
+	resp.ResponseMsg = "Get Account By Number Successfully"
 	resp.Body = string(respbody)
 
 	return &resp, nil
