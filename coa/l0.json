@@ -1,0 +1,35 @@
+{
+  "length": 1,
+  "position": 1,
+  "prefix": "",
+  "list": [
+    {
+      "kode": "1",
+      "nama": "Aset Lancar & Tetap"
+    },
+    {
+      "kode": "2",
+      "nama": "Kewajiban & Hutang"
+    },
+    {
+      "kode": "3",
+      "nama": "Ekuitas & Modal"
+    },
+    {
+      "kode": "4",
+      "nama": "Pendapatan & Penjualan"
+    },
+    {
+      "kode": "5",
+      "nama": "HPP & Pembelian"
+    },
+    {
+      "kode": "6",
+      "nama": "Beban Operasional & Gaji"
+    },
+    {
+      "kode": "7",
+      "nama": "Aktivitas Non-Operasional"
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "length": 3,
+  "position": 2,
+  "prefix": "2",
+  "list": [
+    {
+      "kode": "200",
+      "nama": "Piutang"
+    },
+    {
+      "kode": "210",
+      "nama": "Piutang Usaha"
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "length": 3,
+  "position": 2,
+  "prefix": "1",
+  "list": [
+    {
+      "kode": "100",
+      "nama": "Kas"
+    },
+    {
+      "kode": "110",
+      "nama": "Bank"
+    }
+  ]
+}
