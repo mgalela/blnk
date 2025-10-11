@@ -1,16 +1,16 @@
 {
   "length": 1,
   "position": 2,
-  "prefix": "2",
+  "prefix": "6",
   "list": [
     {
       "kode": "1",
-      "nama": "Liabilitas Lancar",
+      "nama": "Beban Operasional",
       "enable": true
     },
     {
       "kode": "2",
-      "nama": "Liabilitas Tidak Lancar",
+      "nama": "Beban Non Operasional",
       "enable": true
     }
   ]

@@ -1,0 +1,32 @@
+{
+  "length": 1,
+  "position": 2,
+  "prefix": "3",
+  "list": [
+    {
+      "kode": "1",
+      "nama": "Modal",
+      "enable": true
+    },
+    {
+      "kode": "2",
+      "nama": "Saldo Laba",
+      "enable": true
+    },
+    {
+      "kode": "3",
+      "nama": "Dividen",
+      "enable": true
+    },
+    {
+      "kode": "4",
+      "nama": "Cadangan Umum",
+      "enable": true
+    },
+    {
+      "kode": "5",
+      "nama": "Laba/(Rugi)",
+      "enable": true
+    }
+  ]
+}

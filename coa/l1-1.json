@@ -1,15 +1,17 @@
 {
-  "length": 3,
+  "length": 1,
   "position": 2,
   "prefix": "1",
   "list": [
     {
-      "kode": "100",
-      "nama": "Kas"
+      "kode": "1",
+      "nama": "Aset Lancar",
+      "enable": true
     },
     {
-      "kode": "110",
-      "nama": "Bank"
+      "kode": "2",
+      "nama": "Aset Tidak Lancar",
+      "enable": true
     }
   ]
 }

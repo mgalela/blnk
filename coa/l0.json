@@ -5,31 +5,38 @@
   "list": [
     {
       "kode": "1",
-      "nama": "Aset Lancar & Tetap"
+      "nama": "Aset",
+      "enable": true
     },
     {
       "kode": "2",
-      "nama": "Kewajiban & Hutang"
+      "nama": "Liabilitas",
+      "enable": true
     },
     {
       "kode": "3",
-      "nama": "Ekuitas & Modal"
+      "nama": "Ekuitas",
+      "enable": true
     },
     {
       "kode": "4",
-      "nama": "Pendapatan & Penjualan"
+      "nama": "Pendapatan",
+      "enable": true
     },
     {
       "kode": "5",
-      "nama": "HPP & Pembelian"
+      "nama": "HPP",
+      "enable": true
     },
     {
       "kode": "6",
-      "nama": "Beban Operasional & Gaji"
+      "nama": "Beban",
+      "enable": true
     },
     {
       "kode": "7",
-      "nama": "Aktivitas Non-Operasional"
+      "nama": "Aktivitas Non-Operasional",
+      "enable": false
     }
   ]
 }

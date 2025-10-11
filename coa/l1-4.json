@@ -1,0 +1,27 @@
+{
+  "length": 1,
+  "position": 2,
+  "prefix": "4",
+  "list": [
+    {
+      "kode": "1",
+      "nama": "Pendapatan Usaha",
+      "enable": true
+    },
+    {
+      "kode": "2",
+      "nama": "",
+      "enable": false
+    },
+    {
+      "kode": "3",
+      "nama": "Biaya Komisi Transaksi",
+      "enable": true
+    },
+    {
+      "kode": "4",
+      "nama": "Pendapatan Lain-lain",
+      "enable": true
+    }
+  ]
+}

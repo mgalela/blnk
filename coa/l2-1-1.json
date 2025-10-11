@@ -1,0 +1,62 @@
+{
+  "length": 2,
+  "position": 3,
+  "prefix": "1.1",
+  "list": [
+    {
+      "kode": "01",
+      "nama": "Kas",
+      "enable": true
+    },
+    {
+      "kode": "02",
+      "nama": "Bank",
+      "enable": true
+    },
+    {
+      "kode": "03",
+      "nama": "Piutang",
+      "enable": true
+    },
+    {
+      "kode": "04",
+      "nama": "Investasi Jangka Pendek",
+      "enable": true
+    },
+    {
+      "kode": "05",
+      "nama": "Persediaan",
+      "enable": true
+    },
+    {
+      "kode": "06",
+      "nama": "Pajak Dibayar Dimuka",
+      "enable": true
+    },
+    {
+      "kode": "07",
+      "nama": "Biaya Dibayar Dimuka",
+      "enable": true
+    },
+    {
+      "kode": "08",
+      "nama": "Aset Lancar Lainnya",
+      "enable": true
+    },
+    {
+      "kode": "09",
+      "nama": "Penempatan Pada Bank",
+      "enable": true
+    },
+    {
+      "kode": "10",
+      "nama": "Penyisihan Penghapusan Aset Produktif",
+      "enable": true
+    },
+    {
+      "kode": "11",
+      "nama": "Rupa-rupa Aset",
+      "enable": true
+    }
+  ]
+}
