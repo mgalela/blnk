@@ -1,0 +1,50 @@
+{
+  "position": 3,
+  "prefix": "1.1",
+  "list": [
+    {
+      "01.01.01.00": "Kas",
+      "status": "enabled"
+    },
+    {
+      "01.01.02.00": "Bank",
+      "status": "enabled"
+    },
+    {
+      "01.01.03.00": "Piutang",
+      "status": "enabled"
+    },
+    {
+      "01.01.04.00": "Investasi Jangka Pendek",
+      "status": "enabled"
+    },
+    {
+      "01.01.05.00": "Persediaan",
+      "status": "enabled"
+    },
+    {
+      "01.01.06.00": "Pajak Dibayar Dimuka",
+      "status": "enabled"
+    },
+    {
+      "01.01.07.00": "Biaya Dibayar Dimuka",
+      "status": "enabled"
+    },
+    {
+      "01.01.08.00": "Aset Lancar Lainnya",
+      "status": "enabled"
+    },
+    {
+      "01.01.09.00": "Penempatan Pada Bank",
+      "status": "enabled"
+    },
+    {
+      "01.01.10.00": "Penyisihan Penghapusan Aset Produktif",
+      "status": "enabled"
+    },
+    {
+      "01.01.11.00": "Rupa-rupa Aset",
+      "status": "enabled"
+    }
+  ]
+}

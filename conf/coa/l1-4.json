@@ -1,0 +1,22 @@
+{
+  "position": 2,
+  "prefix": "4",
+  "list": [
+    {
+      "04.01.00.00": "Pendapatan Usaha",
+      "status": "enabled"
+    },
+    {
+      "04.02.00.00": "",
+      "status": "disabled"
+    },
+    {
+      "04.03.00.00": "Biaya Komisi Transaksi",
+      "status": "enabled"
+    },
+    {
+      "04.04.00.00": "Pendapatan Lain-lain",
+      "status": "enabled"
+    }
+  ]
+}

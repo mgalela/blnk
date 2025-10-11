@@ -1,0 +1,46 @@
+{
+  "position": 2,
+  "prefix": "5",
+  "list": [
+    {
+      "05.01.00.00": "HPP Transaksi Paket Umrah",
+      "status": "disabled"
+    },
+    {
+      "05.02.00.00": "HPP Transaksi Badal Haji",
+      "status": "disabled"
+    },
+    {
+      "05.10.00.00": "HPP Transaksi Paket Wisata",
+      "status": "disabled"
+    },
+    {
+      "05.11.00.00": "HPP Transaksi Paket Haji",
+      "status": "disabled"
+    },
+    {
+      "05.12.00.00": "HPP Transaksi Badal Umrah",
+      "status": "disabled"
+    },
+    {
+      "05.14.00.00": "HPP Thaif",
+      "status": "disabled"
+    },
+    {
+      "05.15.00.00": "HPP Riyal",
+      "status": "disabled"
+    },
+    {
+      "05.16.00.00": "HPP Vaksin Meningitis",
+      "status": "disabled"
+    },
+    {
+      "05.17.00.00": "HPP Lainnya",
+      "status": "disabled"
+    },
+    {
+      "05.18.00.00": "HPP Transaksi Hotel",
+      "status": "disabled"
+    }
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "id": "01",
+  "name": "Travel Haji & Umroh",
+  "desc": "Chart of Account untuk Travel Haji & Umroh",
+  "version": "1.0.0",
+  "position": 1,
+  "list": [
+    {
+      "01.00.00.00": "Aset",
+      "status": "enabled"
+    },
+    {
+      "02.00.00.00": "Liabilitas",
+      "status": "enabled"
+    },
+    {
+      "03.00.00.00": "Ekuitas",
+      "status": "enabled"
+    },
+    {
+      "04.00.00.00": "Pendapatan",
+      "status": "enabled"
+    },
+    {
+      "05.00.00.00": "HPP",
+      "status": "enabled"
+    },
+    {
+      "06.00.00.00": "Beban",
+      "status": "enabled"
+    },
+    {
+      "07.00.00.00": "Aktivitas Non-Operasional",
+      "status": "disabled"
+    }
+  ]
+}

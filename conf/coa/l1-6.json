@@ -1,0 +1,14 @@
+{
+  "position": 2,
+  "prefix": "6",
+  "list": [
+    {
+      "06.01.00.00": "Beban Operasional",
+      "status": "enabled"
+    },
+    {
+      "06.02.00.00": "Beban Non Operasional",
+      "status": "enabled"
+    }
+  ]
+}

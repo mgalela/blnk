@@ -1,0 +1,14 @@
+{
+  "position": 2,
+  "prefix": "2",
+  "list": [
+    {
+      "02.01.00.00": "Liabilitas Lancar",
+      "status": "enabled"
+    },
+    {
+      "02.02.00.00": "Liabilitas Tidak Lancar",
+      "status": "enabled"
+    }
+  ]
+}

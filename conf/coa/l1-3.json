@@ -1,0 +1,26 @@
+{
+  "position": 2,
+  "prefix": "3",
+  "list": [
+    {
+      "03.01.00.00": "Modal",
+      "status": "enabled"
+    },
+    {
+      "03.02.00.00": "Saldo Laba",
+      "status": "enabled"
+    },
+    {
+      "03.03.00.00": "Dividen",
+      "status": "enabled"
+    },
+    {
+      "03.04.00.00": "Cadangan Umum",
+      "status": "enabled"
+    },
+    {
+      "03.05.00.00": "Laba/(Rugi)",
+      "status": "enabled"
+    }
+  ]
+}
